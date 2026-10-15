@@ -2,16 +2,14 @@
 import os
 import hashlib
 
-
-EMAIL = "23f2001486@ds.study.iitm.ac.in"
-
 from mcp.server.fastmcp import FastMCP, Context
 from mcp.server.transport_security import TransportSecuritySettings
+
+EMAIL = "23f2001486@ds.study.iitm.ac.in".strip().lower()
 
 mcp = FastMCP(
     "ExamChallenge",
     stateless_http=True,
-    json_response=True,
     transport_security=TransportSecuritySettings(
         allowed_hosts=[
             "mcpserver-iedu.onrender.com",
@@ -23,24 +21,27 @@ mcp = FastMCP(
     ),
 )
 
+
 @mcp.tool()
 def solve_challenge(ctx: Context) -> str:
-    headers = {
-        key.lower(): value
-        for key, value in (ctx.headers or {}).items()
-    }
+    """Return the hash for the challenge in the current HTTP request."""
+
+    # First try the original HTTP request's headers.
+    request_context = ctx.request_context
+    request = getattr(request_context, "request", None)
+
+    if request is not None:
+        headers = request.headers
+    else:
+        headers = ctx.headers or {}
 
     challenge = headers.get("x-exam-challenge")
 
     if challenge is None:
         raise ValueError("Missing X-Exam-Challenge header")
 
-    email = EMAIL.strip().lower()
-    text = f"{challenge}:{email}"
-
-    return hashlib.sha256(
-        text.encode("utf-8")
-    ).hexdigest()[:16]
+    text = f"{challenge}:{EMAIL}"
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
 
 if __name__ == "__main__":
