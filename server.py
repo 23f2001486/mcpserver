@@ -2,16 +2,26 @@
 import os
 import hashlib
 
-from mcp.server.fastmcp import FastMCP, Context
 
 EMAIL = "23f2001486@ds.study.iitm.ac.in"
+
+from mcp.server.fastmcp import FastMCP, Context
+from mcp.server.transport_security import TransportSecuritySettings
 
 mcp = FastMCP(
     "ExamChallenge",
     stateless_http=True,
-    json_response=True
+    json_response=True,
+    transport_security=TransportSecuritySettings(
+        allowed_hosts=[
+            "mcpserver-iedu.onrender.com",
+            "mcpserver-iedu.onrender.com:*",
+        ],
+        allowed_origins=[
+            "https://mcpserver-iedu.onrender.com",
+        ],
+    ),
 )
-
 
 @mcp.tool()
 def solve_challenge(ctx: Context) -> str:
