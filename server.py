@@ -25,18 +25,22 @@ mcp = FastMCP(
 
 @mcp.tool()
 def solve_challenge(ctx: Context) -> str:
-    """Solve the exam challenge using the current HTTP request header."""
+    headers = {
+        key.lower(): value
+        for key, value in (ctx.headers or {}).items()
+    }
 
-    headers = ctx.headers or {}
     challenge = headers.get("x-exam-challenge")
 
-    if not challenge:
+    if challenge is None:
         raise ValueError("Missing X-Exam-Challenge header")
 
-    text = f"{challenge}:{EMAIL}"
-    answer = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+    email = EMAIL.strip().lower()
+    text = f"{challenge}:{email}"
 
-    return answer
+    return hashlib.sha256(
+        text.encode("utf-8")
+    ).hexdigest()[:16]
 
 
 if __name__ == "__main__":
